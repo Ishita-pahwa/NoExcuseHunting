@@ -24,6 +24,7 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
     #url(r'^home/', include('posts.urls')),
     url(r'^posts/', include("posts.urls", namespace='posts')),
+    url(r'^board/', include("board.urls", namespace='board')),
    # url(r'^taggit_autosuggest/', include('taggit_autosuggest.urls')),
     #url(r'^posts/$', "<appname>.views.<function_name>"),
 ]

@@ -19,9 +19,17 @@ from django.shortcuts import redirect
 from django.template.loader import get_template
 from django.template import Context
 
-from .forms import PostForm
-from .models import Post
+from .forms import PostForm #, BoardForm
+from .models import Post,Tag
+#from .models import Board
 from .forms import ContactForm
+from django.contrib.auth.models import User
+
+
+def admin(request):
+	users = User.objects.all()
+	print users
+	return render(request,'admin.html')
 
 def post_create(request):
 	if not request.user.is_staff or not request.user.is_superuser:
@@ -40,6 +48,25 @@ def post_create(request):
 	}
 	return render(request, "post_form.html", context)
 
+
+def board_create(request):
+	if not request.user.is_staff or not request.user.is_superuser:
+		raise Http404
+		
+	form = BoardForm(request.POST or None, request.FILES or None)
+	if form.is_valid():
+		instance = form.save(commit=False)
+		instance.user = request.user
+		instance.save()
+		# message success
+		messages.success(request, "Successfully Created")
+		return HttpResponseRedirect(instance.get_absolute_url())
+	context = {
+		"form": form,
+	}
+	return render(request, "post_form.html", context)
+
+
 '''
 Created for Django Code Review
 '''
@@ -51,7 +78,11 @@ class PostDetailView(DetailView):
 	
 	def get_object(self, *args, **kwargs):
 		slug = self.kwargs.get("slug")
-		instance = get_object_or_404(Post, slug=slug)
+		if(get_object_or_404(Post, slug=slug)):	
+			instance = get_object_or_404(Post, slug=slug)
+		elif(get_object_or_404(Board, slug=slug)):
+			instance= get_object_or_404(Board, slug=slug)
+		print "$$$$$$$$$$$$$$$$---------",instance #,"--------",i2
 		if instance.publish > timezone.now().date() or instance.draft:
 			if not request.user.is_staff or not request.user.is_superuser:
 				raise Http404
@@ -64,6 +95,26 @@ class PostDetailView(DetailView):
 		return context
 	
 # in urls.py --> PostDetailView.as_view() instead of post_detail
+
+# class BoardDetailView(DetailView):
+# 	template_name = 'post_detail.html' 
+	
+# 	def get_object(self, *args, **kwargs):
+# 		slug = self.kwargs.get("slug")
+# 		instance = get_object_or_404(Board, slug=slug)
+# 		if instance.publish > timezone.now().date() or instance.draft:
+# 			if not request.user.is_staff or not request.user.is_superuser:
+# 				raise Http404
+# 		return instance
+	
+	# def get_context_data(self, *args, **kwargs):
+	# 	context = super(BoardDetailView, self).get_context_data(*args, **kwargs)
+	# 	instance = context['object']
+	# 	context['share_string'] = quote_plus(instance.content)
+	# 	return context
+
+
+
 
 
 def post_detail(request, slug=None):
@@ -79,6 +130,19 @@ def post_detail(request, slug=None):
 	}
 	return render(request, "post_detail.html", context)
 
+# def board_detail(request, slug=None):
+# 	instance = get_object_or_404(Board, slug=slug)
+# 	if instance.publish > timezone.now().date() or instance.draft:
+# 		if not request.user.is_staff or not request.user.is_superuser:
+# 			raise Http404
+# 	share_string = quote_plus(instance.content)
+# 	context = {
+# 		"title": instance.title,
+# 		"instance": instance,
+# 		"share_string": share_string,
+# 	}
+# 	return render(request, "post_detail.html", context)
+
 def post_list(request):
 	today = timezone.now().date()
 	queryset_list = Post.objects.active() #.order_by("-timestamp")
@@ -86,13 +150,13 @@ def post_list(request):
 		queryset_list = Post.objects.all()
 	
 	query = request.GET.get("q")
-	if query:
-		queryset_list = queryset_list.filter(
-				Q(title__icontains=query)|
-				Q(content__icontains=query)|
-				Q(user__first_name__icontains=query) |
-				Q(user__last_name__icontains=query)
-				).distinct()
+	# if query:
+		# queryset_list = queryset_list.filter(
+		# 		Q(title__icontains=query)|
+		# 		Q(content__icontains=query)|
+		# 		Q(user__first_name__icontains=query) |
+		# 		Q(user__last_name__icontains=query)
+		# 		).distinct()
 	paginator = Paginator(queryset_list, 8) # Show 25 contacts per page
 	page_request_var = "page"
 	page = request.GET.get(page_request_var)
@@ -112,10 +176,47 @@ def post_list(request):
 		"page_request_var": page_request_var,
 		"today": today,
 	}
+
+	for obj in queryset:
+		print obj.tags
+	print "--------------$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
 	return render(request, "post_list.html", context)
 
 
+# def board_list(request):
+# 	today = timezone.now().date()
+# 	queryset_list = Board.objects.active() #.order_by("-timestamp")
+# 	if request.user.is_staff or request.user.is_superuser:
+# 		queryset_list = Post.objects.all()
+	
+# 	query = request.GET.get("q")
+# 	if query:
+# 		queryset_list = queryset_list.filter(
+# 				Q(title__icontains=query)|
+# 				Q(content__icontains=query)|
+# 				Q(user__first_name__icontains=query) |
+# 				Q(user__last_name__icontains=query)
+# 				).distinct()
+# 	paginator = Paginator(queryset_list, 8) # Show 25 contacts per page
+# 	page_request_var = "page"
+# 	page = request.GET.get(page_request_var)
+# 	try:
+# 		queryset = paginator.page(page)
+# 	except PageNotAnInteger:
+# 		# If page is not an integer, deliver first page.
+# 		queryset = paginator.page(1)
+# 	except EmptyPage:
+# 		# If page is out of range (e.g. 9999), deliver last page of results.
+# 		queryset = paginator.page(paginator.num_pages)
 
+
+# 	context = {
+# 		"object_list": queryset, 
+# 		"title": "List",
+# 		"page_request_var": page_request_var,
+# 		"today": today,
+# 	}
+# 	return render(request, "post_list.html", context)
 
 
 def post_update(request, slug=None):
@@ -137,8 +238,33 @@ def post_update(request, slug=None):
 	return render(request, "post_form.html", context)
 
 
+# def board_update(request, slug=None):
+# 	if not request.user.is_staff or not request.user.is_superuser:
+# 		raise Http404
+# 	instance = get_object_or_404(Post, slug=slug)
+# 	form = BoardForm(request.POST or None, request.FILES or None, instance=instance)
+# 	if form.is_valid():
+# 		instance = form.save(commit=False)
+# 		instance.save()
+# 		messages.success(request, "<a href='#'>Item</a> Saved", extra_tags='html_safe')
+# 		return HttpResponseRedirect(instance.get_absolute_url())
+
+# 	context = {
+# 		"title": instance.title,
+# 		"instance": instance,
+# 		"form":form,
+# 	}
+# 	return render(request, "post_form.html", context)
 
 def post_delete(request, slug=None):
+	if not request.user.is_staff or not request.user.is_superuser:
+		raise Http404
+	instance = get_object_or_404(Post, slug=slug)
+	instance.delete()
+	messages.success(request, "Successfully deleted")
+	return redirect("posts:list")
+
+def board_delete(request, slug=None):
 	if not request.user.is_staff or not request.user.is_superuser:
 		raise Http404
 	instance = get_object_or_404(Post, slug=slug)
@@ -194,3 +320,38 @@ def contact(request):
 	return render(request, 'contactUS.html', {'form': form_class,})
 
 	#return render(request,'contactUS.html')
+
+def board_list(request):
+	today = timezone.now().date()
+	queryset_list = Board.objects.active() #.order_by("-timestamp")
+	if request.user.is_staff or request.user.is_superuser:
+		queryset_list = Board.objects.all()
+	
+	query = request.GET.get("q")
+	if query:
+		queryset_list = queryset_list.filter(
+				Q(title__icontains=query)|
+				Q(content__icontains=query)|
+				Q(user__first_name__icontains=query) |
+				Q(user__last_name__icontains=query)
+				).distinct()
+	paginator = Paginator(queryset_list, 8) # Show 25 contacts per page
+	page_request_var = "page"
+	page = request.GET.get(page_request_var)
+	try:
+		queryset = paginator.page(page)
+	except PageNotAnInteger:
+		# If page is not an integer, deliver first page.
+		queryset = paginator.page(1)
+	except EmptyPage:
+		# If page is out of range (e.g. 9999), deliver last page of results.
+		queryset = paginator.page(paginator.num_pages)
+
+
+	context = {
+		"object_list": queryset, 
+		"title": "List",
+		"page_request_var": page_request_var,
+		"today": today,
+	}
+	return render(request, "board.html", context)

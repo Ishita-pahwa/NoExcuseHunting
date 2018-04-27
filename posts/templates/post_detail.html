@@ -6,8 +6,25 @@
 {% endblock head_title %}
 
 
-
 {% block content %}
+
+{% if user.is_superuser %}
+<div class='col-sm-5'>
+    <form onsubmit="get_action(this)" id="deletepost" >
+
+{% csrf_token %}
+<button id="bb" name="cp" class="btn btn-danger" style="height:30px;margin-left:330px">DELETE POST</button><br>
+</form>
+</div>
+<div class='col-sm-7'>
+    <form onsubmit="get_actionedit(this)" id="editpost" >
+
+{% csrf_token %}
+<button id="bb" name="cp" class="btn btn-success" style="height:30px">EDIT POST</button><br>
+</form>
+</div>
+{% endif %} 
+
 <div class='col-sm-6 col-sm-offset-3'>
     {% if object.image %}
     <img src='{{ object.image.url }}' class='img-responsive' />
@@ -17,31 +34,31 @@
 <p>Author: {{ object.user.get_full_name }}</p>
 {% endif %}
 
+
+<script>  
+
+var url=window.location.href
+var urlc=url[url.length-2]
+var urledit=url+"edit"
+url+="delete"
+
+
+function get_action(form){
+	form.action=url;
+}
+
+function get_actionedit(form){
+	form.action=urledit;
+}
+
+// document.getElementById('deletepost').action = url;
+</script>
+
+
 <p><div class="fb-like" data-href="{{ request.build_absolute_uri }}" data-layout="button_count" data-action="like" data-show-faces="true" data-share="true"></div>
 <hr/>
 </p>
 
-<!--
- <p>
-<a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}">
-Facebook
-</a>
-</p>
-
-<a href="https://twitter.com/home?status={{ object.content|truncatechars:80|urlify }}%20{{ request.build_absolute_uri }}">
-Twitter
-</a>
-
-<a href='https://plus.google.com/share?url={{ request.build_absolute_uri }}'>
-
-
-<a href="https://www.linkedin.com/shareArticle?mini=true&url={{ request.build_absolute_uri }}&title={{ object.title }}&summary={{ share_string }}&source={{ request.build_absolute_uri }}">
-Linkedin
-</a>
-
-<a href="http://www.reddit.com/submit?url={{ request.build_absolute_uri }}&title={{ share_string }}.">Reddit</a>
-
-</p> -->
 <div class='row'>
 <div class='col-sm-12'>
 
@@ -50,13 +67,14 @@ Linkedin
 <hr/>
 <br/>
 <div class="fb-comments" data-href="{{ request.build_absolute_uri }}" data-numposts="5"></div>
+</div>
 
-<!--  <div class="fb-comments" data-href="http://127.0.0.1:8000/posts/hello-world/" data-numposts="5"></div> -->
+
+
 
 </div>
 </div>
-</div>
 
-<!-- <div class="fb-comments" data-href="https://developers.facebook.com/docs/plugins/comments#configurator" data-numposts="5"></div>
- -->
 {% endblock content %}
+
+

@@ -7,6 +7,13 @@
 <br>
 <!--<button type="button" class="btn btn-warning">Primary</button> -->
 
+
+{% if user.is_superuser %}
+    <!-- <p>Hello, admin.</p> -->
+{% else %}
+    <!-- <p>Hello, ordinary visitor.</p> -->
+{% endif %}
+
 <style>
 .btn-group button{
     margin:0 auto;
@@ -42,7 +49,10 @@
 
 <div class="btn-group">
 
+<form action="http://127.0.0.1:8000/board/blist/" method="post" id="board">
+{% csrf_token %}
 <button id="bb" name="board" class="btn btn-info" style="height:44px; margin-right:10px">BRAGGING BOARD</button><br>
+</form>
 
 <form action="http://127.0.0.1:8000/posts/blogs/" method="post" id="list">
 {% csrf_token %}
@@ -63,7 +73,10 @@
 <button id="cu " name="contact_us" class="btn btn-info" style="margin-right:10px">CONTACT US</button>
 </form>
 
+<!-- <form action="http://127.0.0.1:8000/posts/admin/" method="post" id="donate">
+{% csrf_token %}
 <button id="admin" name="admin" class="btn btn-info" style="height:44px; margin-right:10px">ADMIN</button>
+</form> -->
 
 </div>
 

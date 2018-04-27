@@ -1,8 +1,8 @@
 from django.contrib import admin
 
 # Register your models here.
-from .models import Post
-from posts.models import Tag
+from .models import Post,Tag
+#from posts.models import Tag,Board
 
 class PostModelAdmin(admin.ModelAdmin):
 	list_display = ["title", "updated", "timestamp"]
@@ -17,3 +17,4 @@ class PostModelAdmin(admin.ModelAdmin):
 
 admin.site.register(Post, PostModelAdmin)
 admin.site.register(Tag)
+#admin.site.register(Board)
